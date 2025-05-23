@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Goat Milk Soap Recipe Generator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .loader {
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid #3498db;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        /* Custom Modal Styles */
+        .modal {
+            display: none; /* Hidden by default */
+            position: fixed; /* Stay in place */
+            z-index: 1000; /* Sit on top */
+            left: 0;
+            top: 0;
+            width: 100%; /* Full width */
+            height: 100%; /* Full height */
+            overflow: auto; /* Enable scroll if needed */
+            background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
+        }
+        .modal-content {
+            background-color: #fefefe;
+            margin: 15% auto; /* 15% from the top and centered */
+            padding: 20px;
+            border: 1px solid #888;
+            width: 80%; /* Could be more or less, depending on screen size */
+            max-width: 500px;
+            border-radius: 8px;
+            text-align: center;
+        }
+        .modal-close-button {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+        }
+        .modal-close-button:hover,
+        .modal-close-button:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-green-100 to-blue-100 min-h-screen flex flex-col items-center justify-center p-4">
+
+    <div class="bg-white p-8 rounded-xl shadow-2xl w-full max-w-2xl">
+        <h1 class="text-3xl font-bold text-center text-green-700 mb-8">Custom Goat Milk Soap Recipe</h1>
+
+        <div id="lyeSafetyWarning" class="mb-6 p-4 bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 rounded-md">
+            <h3 class="font-bold">Important Safety Notice: Lye (Sodium Hydroxide)</h3>
+            <p class="text-sm">Soap making involves lye, which is a caustic substance. Always wear protective gear (gloves, eye protection) and work in a well-ventilated area. Keep lye away from children and pets. This generator provides calculations based on standard values, but always double-check your recipe and understand the process before starting. We are not responsible for any accidents or incorrect soap batches.</p>
+        </div>
+
+        <form id="soapForm" class="space-y-6">
+            <div>
+                <label for="totalOilWeight" class="block text-sm font-medium text-gray-700">Total Oil Weight (grams):</label>
+                <input type="number" id="totalOilWeight" name="totalOilWeight" value="500" min="100" max="2000" class="mt-1 block w-full p-3 border border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500 sm:text-sm" required>
+                <p class="text-xs text-gray-500 mt-1">Typically 300g to 1000g for a standard batch.</p>
+            </div>
+
+            <div>
+                <label for="superfatPercent" class="block text-sm font-medium text-gray-700">Superfat Percentage (%):</label>
+                <input type="number" id="superfatPercent" name="superfatPercent" value="5" min="0" max="15" class="mt-1 block w-full p-3 border border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500 sm:text-sm" required>
+                <p class="text-xs text-gray-500 mt-1">5-8% is common. This leaves some oils unsaponified for moisturizing.</p>
+            </div>
+
+            <div>
+                <span class="block text-sm font-medium text-gray-700">Herbs (select up to 2):</span>
+                <div class="mt-2 grid grid-cols-2 sm:grid-cols-3 gap-4">
+                    <label class="flex items-center space-x-2 p-2 border border-gray-200 rounded-md hover:bg-green-50 cursor-pointer">
+                        <input type="checkbox" name="herbs" value="Lavender" class="rounded text-green-600 focus:ring-green-500">
+                        <span>Lavender</span>
+                    </label>
+                    <label class="flex items-center space-x-2 p-2 border border-gray-200 rounded-md hover:bg-green-50 cursor-pointer">
+                        <input type="checkbox" name="herbs" value="Calendula Petals" class="rounded text-green-600 focus:ring-green-500">
+                        <span>Calendula</span>
+                    </label>
+                    <label class="flex items-center space-x-2 p-2 border border-gray-200 rounded-md hover:bg-green-50 cursor-pointer">
+                        <input type="checkbox" name="herbs" value="Ground Oatmeal" class="rounded text-green-600 focus:ring-green-500">
+                        <span>Oatmeal</span>
+                    </label>
+                    <label class="flex items-center space-x-2 p-2 border border-gray-200 rounded-md hover:bg-green-50 cursor-pointer">
+                        <input type="checkbox" name="herbs" value="Chamomile Flowers" class="rounded text-green-600 focus:ring-green-500">
+                        <span>Chamomile</span>
+                    </label>
+                    <label class="flex items-center space-x-2 p-2 border border-gray-200 rounded-md hover:bg-green-50 cursor-pointer">
+                        <input type="checkbox" name="herbs" value="Rose Petals" class="rounded text-green-600 focus:ring-green-500">
+                        <span>Rose Petals</span>
+                    </label>
+                     <label class="flex items-center space-x-2 p-2 border border-gray-200 rounded-md hover:bg-green-50 cursor-pointer">
+                        <input type="checkbox" name="herbs" value="Peppermint Leaves" class="rounded text-green-600 focus:ring-green-500">
+                        <span>Peppermint</span>
+                    </label>
+                </div>
+                <p id="herbError" class="text-xs text-red-500 mt-1 hidden">Please select a maximum of 2 herbs.</p>
+            </div>
+
+            <div>
+                <label for="essentialOils" class="block text-sm font-medium text-gray-700">Essential Oils (select one blend or type):</label>
+                <select id="essentialOils" name="essentialOils" class="mt-1 block w-full p-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500 sm:text-sm">
+                    <option value="None">None</option>
+                    <option value="Lavender">Lavender</option>
+                    <option value="Tea Tree">Tea Tree</option>
+                    <option value="Peppermint">Peppermint</option>
+                    <option value="Eucalyptus">Eucalyptus</option>
+                    <option value="Orange & Clove">Orange & Clove Blend</option>
+                    <option value="Rosemary & Mint">Rosemary & Mint Blend</option>
+                </select>
+            </div>
+
+            <div>
+                <label for="scentStrength" class="block text-sm font-medium text-gray-700">Scent Strength:</label>
+                <select id="scentStrength" name="scentStrength" class="mt-1 block w-full p-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500 sm:text-sm">
+                    <option value="0.01">Light (1%)</option>
+                    <option value="0.02" selected>Medium (2%)</option>
+                    <option value="0.03">Strong (3%)</option>
+                </select>
+                 <p class="text-xs text-gray-500 mt-1">Percentage of total oil weight for essential oils. Adjust if using potent EOs.</p>
+            </div>
+            
+            <div class="pt-4">
+                <button type="submit" id="generateButton" class="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-lg font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition duration-150 ease-in-out">
+                    Generate Recipe PDF
+                </button>
+            </div>
+        </form>
+
+        <div id="loadingIndicator" class="loader" style="display: none;"></div>
+        <div id="statusMessage" class="mt-6 text-center text-sm"></div>
+    </div>
+
+    <div id="messageModal" class="modal">
+      <div class="modal-content">
+        <span class="modal-close-button" onclick="closeModal()">&times;</span>
+        <p id="modalMessageText"></p>
+        <button onclick="closeModal()" class="mt-4 px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700">OK</button>
+      </div>
+    </div>
+
+    <footer class="text-center text-sm text-gray-600 mt-12 pb-4">
+        <p>&copy; <span id="currentYear"></span> Homestead Healers AI. For educational purposes. Always practice safe soap making.</p>
+    </footer>
+
+    <script>
+        document.getElementById('currentYear').textContent = new Date().getFullYear();
+
+        // Modal functions
+        const messageModal = document.getElementById('messageModal');
+        const modalMessageText = document.getElementById('modalMessageText');
+        function showModal(message) {
+            modalMessageText.textContent = message;
+            messageModal.style.display = "block";
+        }
+        function closeModal() {
+            messageModal.style.display = "none";
+        }
+        // Close modal if user clicks outside of it
+        window.onclick = function(event) {
+            if (event.target == messageModal) {
+                closeModal();
+            }
+        }
+
+
+        // Herb selection limit
+        const herbCheckboxes = document.querySelectorAll('input[name="herbs"]');
+        const herbError = document.getElementById('herbError');
+        const maxHerbs = 2;
+
+        herbCheckboxes.forEach(checkbox => {
+            checkbox.addEventListener('change', () => {
+                const checkedHerbs = document.querySelectorAll('input[name="herbs"]:checked').length;
+                if (checkedHerbs > maxHerbs) {
+                    checkbox.checked = false; // Uncheck the last checked item
+                    herbError.classList.remove('hidden');
+                } else {
+                    herbError.classList.add('hidden');
+                }
+            });
+        });
+
+        const soapForm = document.getElementById('soapForm');
+        const generateButton = document.getElementById('generateButton');
+        const loadingIndicator = document.getElementById('loadingIndicator');
+        const statusMessage = document.getElementById('statusMessage');
+
+        // SAP values for a fixed oil blend:
+        // Olive Oil: 60% (SAP NaOH: 0.135)
+        // Coconut Oil: 30% (SAP NaOH: 0.183)
+        // Castor Oil: 10% (SAP NaOH: 0.128)
+        const oilBlend = {
+            olive: { percent: 0.60, sap: 0.135 },
+            coconut: { percent: 0.30, sap: 0.183 },
+            castor: { percent: 0.10, sap: 0.128 }
+        };
+
+        soapForm.addEventListener('submit', async function(event) {
+            event.preventDefault();
+            statusMessage.textContent = '';
+            loadingIndicator.style.display = 'block';
+            generateButton.disabled = true;
+            generateButton.classList.add('opacity-50', 'cursor-not-allowed');
+
+            try {
+                const formData = new FormData(soapForm);
+                const totalOilWeight = parseFloat(formData.get('totalOilWeight'));
+                const superfatPercent = parseFloat(formData.get('superfatPercent'));
+                const selectedHerbNodes = document.querySelectorAll('input[name="herbs"]:checked');
+                const selectedHerbs = Array.from(selectedHerbNodes).map(cb => cb.value);
+                const essentialOilChoice = formData.get('essentialOils');
+                const scentStrength = parseFloat(formData.get('scentStrength'));
+
+                // --- Recipe Calculations ---
+                const oliveOilWeight = totalOilWeight * oilBlend.olive.percent;
+                const coconutOilWeight = totalOilWeight * oilBlend.coconut.percent;
+                const castorOilWeight = totalOilWeight * oilBlend.castor.percent;
+
+                const lyeForOlive = oliveOilWeight * oilBlend.olive.sap;
+                const lyeForCoconut = coconutOilWeight * oilBlend.coconut.sap;
+                const lyeForCastor = castorOilWeight * oilBlend.castor.sap;
+                const totalLyeRaw = lyeForOlive + lyeForCoconut + lyeForCastor;
+                
+                const actualLyeNaOH = totalLyeRaw * (1 - (superfatPercent / 100));
+
+                // Goat Milk quantity: Using 33% lye concentration as a common guideline
+                // Liquid = Lye / LyeConcentration. If LyeConcentration is 0.33, Liquid = Lye / 0.33.
+                // Or, a simpler approach: goat milk as 2x lye amount, or 38% of oil weight.
+                // Let's use 38% of oil weight, ensuring it's at least 1.5x lye for safety.
+                let goatMilkQty = totalOilWeight * 0.38;
+                if (goatMilkQty < actualLyeNaOH * 1.5) {
+                    goatMilkQty = actualLyeNaOH * 1.5; // Minimum liquid to safely dissolve lye
+                }
+                
+                let essentialOilQtyGrams = 0;
+                if (essentialOilChoice !== "None") {
+                    essentialOilQtyGrams = totalOilWeight * scentStrength;
+                }
+
+                // --- AI Content Generation for Herbs ---
+                let herbDescription = "Enjoy the natural goodness of your handcrafted soap!";
+                if (selectedHerbs.length > 0) {
+                    const prompt = `Generate a short, appealing 1-2 sentence description for a goat milk soap containing the following herbs: ${selectedHerbs.join(', ')}. Focus on the sensory experience or gentle, natural properties suitable for a homesteading or wellness audience. For example, mention things like 'soothing touch', 'gentle exfoliation', 'calming aroma', 'earthy notes', 'skin-loving properties'.`;
+                    
+                    try {
+                        // Note: API key is an empty string. Canvas will inject it.
+                        const apiKey = ""; 
+                        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+                        
+                        const payload = {
+                            contents: [{ role: "user", parts: [{ text: prompt }] }]
+                        };
+
+                        const response = await fetch(apiUrl, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(payload)
+                        });
+
+                        if (!response.ok) {
+                            const errorBody = await response.text();
+                            throw new Error(`AI API request failed with status ${response.status}: ${errorBody}`);
+                        }
+                        
+                        const result = await response.json();
+                        
+                        if (result.candidates && result.candidates.length > 0 &&
+                            result.candidates[0].content && result.candidates[0].content.parts &&
+                            result.candidates[0].content.parts.length > 0) {
+                            herbDescription = result.candidates[0].content.parts[0].text;
+                        } else {
+                            console.warn("AI response structure not as expected, using default description.", result);
+                            // Use default if AI response is not as expected
+                        }
+                    } catch (aiError) {
+                        console.error("Error fetching AI description:", aiError);
+                        statusMessage.textContent = `Error generating AI herb description: ${aiError.message}. Using default.`;
+                        // Continue with default description
+                    }
+                }
+                
+                // --- PDF Generation ---
+                generatePdf({
+                    totalOilWeight,
+                    superfatPercent,
+                    selectedHerbs,
+                    essentialOilChoice,
+                    scentStrength,
+                    oliveOilWeight,
+                    coconutOilWeight,
+                    castorOilWeight,
+                    actualLyeNaOH,
+                    goatMilkQty,
+                    essentialOilQtyGrams,
+                    herbDescription
+                });
+
+            } catch (error) {
+                console.error("Error in form submission:", error);
+                showModal(`An error occurred: ${error.message}. Please check your inputs and try again.`);
+            } finally {
+                loadingIndicator.style.display = 'none';
+                generateButton.disabled = false;
+                generateButton.classList.remove('opacity-50', 'cursor-not-allowed');
+            }
+        });
+
+        function generatePdf(data) {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+
+            // --- PDF Content ---
+            doc.setFontSize(20);
+            doc.setTextColor(40, 116, 50); // Dark Green
+            doc.text("Your Custom Goat Milk Soap Recipe", doc.internal.pageSize.getWidth() / 2, 20, { align: 'center' });
+
+            doc.setFontSize(10);
+            doc.setTextColor(100); // Gray
+            doc.text(`Generated on: ${new Date().toLocaleDateString()}`, doc.internal.pageSize.getWidth() / 2, 28, { align: 'center' });
+
+            let yPos = 40;
+            const lineSpacing = 7;
+            const sectionSpacing = 10;
+            const leftMargin = 15;
+            const valueOffset = 70; // How far from left margin values are printed
+
+            doc.setFontSize(14);
+            doc.setTextColor(0);
+            doc.text("Recipe Overview:", leftMargin, yPos);
+            yPos += lineSpacing;
+
+            doc.setFontSize(11);
+            doc.text(`Total Oil Weight:`, leftMargin, yPos);
+            doc.text(`${data.totalOilWeight.toFixed(2)} g`, leftMargin + valueOffset, yPos);
+            yPos += lineSpacing;
+            
+            doc.text(`Superfat:`, leftMargin, yPos);
+            doc.text(`${data.superfatPercent}%`, leftMargin + valueOffset, yPos);
+            yPos += sectionSpacing;
+
+            doc.setFontSize(12);
+            doc.setTextColor(40, 116, 50);
+            doc.text("Ingredients:", leftMargin, yPos);
+            yPos += lineSpacing;
+            
+            doc.setFontSize(11);
+            doc.setTextColor(0);
+            doc.text("Oils (Fixed Blend):", leftMargin, yPos);
+            yPos += lineSpacing;
+            doc.setFontSize(10);
+            doc.text(`  - Olive Oil (60%):`, leftMargin + 5, yPos);
+            doc.text(`${data.oliveOilWeight.toFixed(2)} g`, leftMargin + valueOffset, yPos);
+            yPos += lineSpacing;
+            doc.text(`  - Coconut Oil (30%):`, leftMargin + 5, yPos);
+            doc.text(`${data.coconutOilWeight.toFixed(2)} g`, leftMargin + valueOffset, yPos);
+            yPos += lineSpacing;
+            doc.text(`  - Castor Oil (10%):`, leftMargin + 5, yPos);
+            doc.text(`${data.castorOilWeight.toFixed(2)} g`, leftMargin + valueOffset, yPos);
+            yPos += lineSpacing;
+
+            doc.setFontSize(11);
+            doc.text("Lye (Sodium Hydroxide - NaOH):", leftMargin, yPos);
+            doc.text(`${data.actualLyeNaOH.toFixed(2)} g`, leftMargin + valueOffset, yPos);
+            yPos += lineSpacing;
+
+            doc.text("Frozen Goat Milk (as liquid):", leftMargin, yPos);
+            doc.text(`${data.goatMilkQty.toFixed(2)} g`, leftMargin + valueOffset, yPos);
+            yPos += sectionSpacing;
+
+            doc.setFontSize(12);
+            doc.setTextColor(40, 116, 50);
+            doc.text("Additives:", leftMargin, yPos);
+            yPos += lineSpacing;
+            doc.setFontSize(11);
+            doc.setTextColor(0);
+
+            if (data.selectedHerbs.length > 0) {
+                doc.text(`Herbs: ${data.selectedHerbs.join(', ')}`, leftMargin, yPos);
+                yPos += lineSpacing;
+                doc.setFontSize(10);
+                doc.setTextColor(70);
+                const herbBlurbLines = doc.splitTextToSize(data.herbDescription, doc.internal.pageSize.getWidth() - leftMargin * 2 - 5);
+                doc.text(herbBlurbLines, leftMargin + 5, yPos);
+                yPos += (herbBlurbLines.length * (lineSpacing - 2)); // Adjust spacing for wrapped text
+                doc.setTextColor(0);
+                doc.setFontSize(11);
+            } else {
+                doc.text("Herbs: None selected", leftMargin, yPos);
+                yPos += lineSpacing;
+            }
+            yPos += (lineSpacing / 2);
+
+            if (data.essentialOilChoice !== "None") {
+                doc.text(`Essential Oils: ${data.essentialOilChoice}`, leftMargin, yPos);
+                yPos += lineSpacing;
+                doc.text(`  - Amount:`, leftMargin + 5, yPos);
+                doc.text(`${data.essentialOilQtyGrams.toFixed(2)} g (${(data.scentStrength*100).toFixed(0)}% of oils)`, leftMargin + valueOffset, yPos);
+                yPos += lineSpacing;
+            } else {
+                doc.text("Essential Oils: None selected", leftMargin, yPos);
+                yPos += lineSpacing;
+            }
+            yPos += sectionSpacing;
+
+            doc.setFontSize(12);
+            doc.setTextColor(40, 116, 50);
+            doc.text("Basic Instructions (Cold Process Method):", leftMargin, yPos);
+            yPos += lineSpacing;
+            doc.setFontSize(10);
+            doc.setTextColor(0);
+            const instructions = [
+                "1. Safety First: Wear gloves, eye protection, and long sleeves. Work in a well-ventilated area.",
+                "2. Prepare Lye-Milk Solution: Slowly add lye to partially frozen or very cold goat milk. Stir gently until dissolved. This mixture will get hot. Allow to cool to 90-110°F (32-43°C).",
+                "3. Prepare Oils: Combine and melt solid oils if necessary. Cool oils to 90-110°F (32-43°C).",
+                "4. Combine: Slowly pour the lye-milk solution into the oils. Stir with a stick blender.",
+                "5. Trace: Blend in short bursts until the mixture reaches 'trace' (pudding-like consistency).",
+                "6. Additives: Stir in herbs and essential oils (if using) at light trace.",
+                "7. Pour: Pour soap into your mold. Tap to release air bubbles.",
+                "8. Cure: Cover and insulate for 24-48 hours. Unmold, cut into bars, and cure for 4-6 weeks in a well-ventilated area.",
+            ];
+            instructions.forEach(inst => {
+                const lines = doc.splitTextToSize(inst, doc.internal.pageSize.getWidth() - leftMargin * 2);
+                doc.text(lines, leftMargin, yPos);
+                yPos += (lines.length * (lineSpacing - 2)); 
+            });
+            yPos += sectionSpacing;
+
+            doc.setFontSize(10);
+            doc.setTextColor(150, 0, 0); // Red for warning
+            doc.text("Disclaimer:", leftMargin, yPos);
+            yPos += (lineSpacing - 2);
+            const disclaimerText = "This recipe is a guideline. Lye is caustic; handle with extreme care. Always double-check calculations from multiple sources and understand the soap making process thoroughly. Perform a patch test before using any homemade soap. We are not liable for any issues arising from the use of this recipe.";
+            const disclaimerLines = doc.splitTextToSize(disclaimerText, doc.internal.pageSize.getWidth() - leftMargin * 2);
+            doc.text(disclaimerLines, leftMargin, yPos);
+            
+            doc.save('GoatMilk_Soap_Recipe.pdf');
+            statusMessage.textContent = 'PDF generated successfully!';
+            showModal('Your custom soap recipe PDF has been downloaded!');
+        }
+
+    </script>
+</body>
+</html>
