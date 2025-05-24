@@ -1,4 +1,4 @@
-
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -145,7 +145,7 @@
     </div>
 
     <footer class="text-center text-sm text-gray-600 mt-12 pb-4">
-        <p>&copy; <span id="currentYear"></span> Homestead Healers AI. For educational purposes. Always practice safe soap making.</p>
+        <p>&copy; <span id="currentYear"></span> Homestead Healers. For educational purposes. Always practice safe soap making.</p>
     </footer>
 
     <script>
@@ -176,20 +176,17 @@
         const customEssentialOilWrapper = document.getElementById('customEssentialOilWrapper');
         const customEssentialOilInput = document.getElementById('customEssentialOil');
 
-        // Show/hide custom essential oil input based on dropdown selection
         essentialOilsDropdown.addEventListener('change', function() {
             if (this.value === 'Other') {
-                customEssentialOilWrapper.style.display = 'block'; // Or use Tailwind classes like .remove('hidden-field')
+                customEssentialOilWrapper.style.display = 'block';
                 customEssentialOilInput.required = true;
             } else {
-                customEssentialOilWrapper.style.display = 'none'; // Or use Tailwind classes like .add('hidden-field')
+                customEssentialOilWrapper.style.display = 'none';
                 customEssentialOilInput.required = false;
-                customEssentialOilInput.value = ''; // Clear if previously filled
+                customEssentialOilInput.value = ''; 
             }
         });
 
-
-        // SAP values (NaOH) and percentages for your preferred oil blend:
         const oilBlendConfig = {
             olive:    { percent: 0.50, sap: 0.135, name: "Olive Oil (Light-colored)" },
             coconut:  { percent: 0.25, sap: 0.183, name: "Coconut Oil" },
@@ -199,7 +196,7 @@
         const goatMilkToOilRatio = 0.1385; 
         const lyeConcentration = 0.33; 
 
-        soapForm.addEventListener('submit', async function(event) {
+        soapForm.addEventListener('submit', async function(event) { // Marked as async, but no await is used now
             event.preventDefault();
             statusMessage.textContent = '';
             loadingIndicator.style.display = 'block';
@@ -218,17 +215,15 @@
                     essentialOilChoice = formData.get('customEssentialOil').trim();
                     if (!essentialOilChoice) {
                         showModal("Please specify your custom essential oil name.");
-                        // Re-enable button and hide loader before throwing error to prevent locked state
                         loadingIndicator.style.display = 'none';
                         generateButton.disabled = false;
                         generateButton.classList.remove('opacity-50', 'cursor-not-allowed');
-                        return; // Stop submission
+                        return; 
                     }
                 }
                 
                 const scentStrength = parseFloat(formData.get('scentStrength'));
 
-                // --- Recipe Calculations ---
                 const oilWeights = {
                     olive: totalOilWeight * oilBlendConfig.olive.percent,
                     coconut: totalOilWeight * oilBlendConfig.coconut.percent,
@@ -246,35 +241,10 @@
                 const goatMilkQty = totalOilWeight * goatMilkToOilRatio;
                 
                 let essentialOilQtyGrams = 0;
-                if (essentialOilChoice.toLowerCase() !== "none" && essentialOilChoice !== "") { // Check against empty string too
+                if (essentialOilChoice.toLowerCase() !== "none" && essentialOilChoice !== "") { 
                     essentialOilQtyGrams = totalOilWeight * scentStrength;
-                } else if (essentialOilChoice === "") { // If "Other" was selected but nothing entered, treat as "None"
-                     essentialOilChoice = "None"; // Standardize for PDF
-                }
-
-
-                // --- AI Content Generation for Herbs ---
-                let herbDescription = "Enjoy the natural goodness of your handcrafted soap!";
-                if (selectedHerbs.length > 0) {
-                    const prompt = `Generate a short, appealing 1-2 sentence description for a goat milk soap containing the following herbs: ${selectedHerbs.join(', ')}. Focus on the sensory experience or gentle, natural properties suitable for a homesteading or wellness audience. For example, mention things like 'soothing touch', 'gentle exfoliation', 'calming aroma', 'earthy notes', 'skin-loving properties'.`;
-                    try {
-                        const apiKey = ""; 
-                        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
-                        const payload = { contents: [{ role: "user", parts: [{ text: prompt }] }] };
-                        const response = await fetch(apiUrl, {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify(payload)
-                        });
-                        if (!response.ok) { throw new Error(`AI API request failed: ${response.status}`); }
-                        const result = await response.json();
-                        if (result.candidates && result.candidates[0].content && result.candidates[0].content.parts[0]) {
-                            herbDescription = result.candidates[0].content.parts[0].text;
-                        }
-                    } catch (aiError) {
-                        console.error("Error fetching AI description:", aiError);
-                        statusMessage.textContent = `Error generating AI herb description. Using default.`;
-                    }
+                } else if (essentialOilChoice === "") { 
+                     essentialOilChoice = "None"; 
                 }
                 
                 // --- PDF Generation ---
@@ -288,15 +258,14 @@
                     actualLyeNaOH,
                     distilledWaterQty, 
                     goatMilkQty,       
-                    essentialOilQtyGrams,
-                    herbDescription
+                    essentialOilQtyGrams
+                    // herbDescription is removed
                 });
 
             } catch (error) {
                 console.error("Error in form submission:", error);
                 showModal(`An error occurred: ${error.message}. Please check inputs.`);
             } finally {
-                // Only re-enable if not already handled by an early return (like custom EO validation)
                 if (generateButton.disabled) { 
                     loadingIndicator.style.display = 'none';
                     generateButton.disabled = false;
@@ -360,19 +329,18 @@
 
             if (data.selectedHerbs.length > 0) {
                 doc.text(`Herbs: ${data.selectedHerbs.join(', ')}`, leftMargin, yPos); yPos += lineSpacing;
-                doc.setFontSize(10); doc.setTextColor(70);
-                const herbBlurbLines = doc.splitTextToSize(data.herbDescription, doc.internal.pageSize.getWidth() - leftMargin * 2 - 5);
-                doc.text(herbBlurbLines, leftMargin + 5, yPos); yPos += (herbBlurbLines.length * (lineSpacing - 2)); 
-                doc.setTextColor(0); doc.setFontSize(11);
+                // Removed herbDescription display logic
             } else {
                 doc.text("Herbs: None selected", leftMargin, yPos); yPos += lineSpacing;
             }
-            yPos += (lineSpacing / 2);
+            yPos += (lineSpacing / 2); // Adjusted spacing slightly
 
             if (data.essentialOilChoice.toLowerCase() !== "none" && data.essentialOilChoice !== "") {
                 doc.text(`Essential Oils: ${data.essentialOilChoice}`, leftMargin, yPos); yPos += lineSpacing;
                 doc.text(`  - Amount:`, leftMargin + 5, yPos); doc.text(`${data.essentialOilQtyGrams.toFixed(2)} g (${(data.scentStrength*100).toFixed(0)}% of oils)`, leftMargin + valueOffset, yPos); yPos += lineSpacing;
-                if (data.essentialOils === "Other" || !document.getElementById('essentialOils').querySelector(`option[value="${data.essentialOilChoice}"]`)) { // Check if it was a custom entry
+                // Check if it was a custom entry by seeing if the value exists in the original dropdown options
+                const isCustomEO = !Array.from(essentialOilsDropdown.options).some(opt => opt.value === data.essentialOilChoice && opt.value !== "Other" && opt.value !== "None");
+                if (isCustomEO && data.essentialOilChoice.toLowerCase() !== "none") { 
                      doc.setFontSize(9); doc.setTextColor(70);
                      doc.text("   (Your custom choice - be creative and enjoy!)", leftMargin + 5, yPos); yPos += (lineSpacing - 2);
                      doc.setFontSize(11); doc.setTextColor(0);
