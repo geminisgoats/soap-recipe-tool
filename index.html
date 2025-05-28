@@ -47,7 +47,7 @@
 
     <div class="bg-white p-8 rounded-xl shadow-2xl w-full max-w-2xl">
         <h1 class="text-3xl font-bold text-center text-green-700 mb-8">Your Custom Goat Milk Soap Recipe</h1>
-        <p class="text-center text-sm text-gray-600 mb-6">Based on your preferred method: Goat milk added to oils, lye solution with distilled water.</p>
+        <p class="text-center text-sm text-gray-600 mb-6">Based on your preferred method: 1:1 Water:Lye ratio, Goat milk added to oils.</p>
 
         <div id="lyeSafetyWarning" class="mb-6 p-4 bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 rounded-md">
             <h3 class="font-bold">Important Safety Notice: Lye (Sodium Hydroxide)</h3>
@@ -56,15 +56,27 @@
 
         <form id="soapForm" class="space-y-6">
             <div>
+                <label class="block text-sm font-medium text-gray-700">Batch Size:</label>
+                <div class="mt-1 flex rounded-md shadow-sm">
+                    <div class="relative flex items-stretch flex-grow focus-within:z-10">
+                        <select id="batchSizeType" name="batchSizeType" class="block w-full p-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500 sm:text-sm">
+                            <option value="standard">Standard Block (1lb / 455g Oils)</option>
+                            <option value="custom">Enter Custom Oil Weight</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <div id="totalOilWeightWrapper">
                 <label for="totalOilWeight" class="block text-sm font-medium text-gray-700">Total Oil Weight (grams):</label>
                 <input type="number" id="totalOilWeight" name="totalOilWeight" value="455" min="100" max="2000" class="mt-1 block w-full p-3 border border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500 sm:text-sm" required>
-                <p class="text-xs text-gray-500 mt-1">Your recipe example uses 455g. Adjust as needed.</p>
+                <p class="text-xs text-gray-500 mt-1">Adjust if "Custom Oil Weight" is selected.</p>
             </div>
 
             <div>
                 <label for="superfatPercent" class="block text-sm font-medium text-gray-700">Superfat Percentage (%):</label>
                 <input type="number" id="superfatPercent" name="superfatPercent" value="5" min="0" max="15" class="mt-1 block w-full p-3 border border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500 sm:text-sm" required>
-                <p class="text-xs text-gray-500 mt-1">5-8% is common. Your recipe example uses 5%.</p>
+                <p class="text-xs text-gray-500 mt-1">5-8% is common. Your recipe uses approx. 5%.</p>
             </div>
 
             <div>
@@ -172,9 +184,32 @@
         const generateButton = document.getElementById('generateButton');
         const loadingIndicator = document.getElementById('loadingIndicator');
         const statusMessage = document.getElementById('statusMessage');
+        
+        const batchSizeTypeDropdown = document.getElementById('batchSizeType');
+        const totalOilWeightInput = document.getElementById('totalOilWeight');
+        const totalOilWeightWrapper = document.getElementById('totalOilWeightWrapper'); // Wrapper for visibility
+
         const essentialOilsDropdown = document.getElementById('essentialOils');
         const customEssentialOilWrapper = document.getElementById('customEssentialOilWrapper');
         const customEssentialOilInput = document.getElementById('customEssentialOil');
+
+        const standardOilWeight = 455; // Standard block oil weight in grams
+
+        // Initialize oil weight input based on default batch size selection
+        function updateOilWeightInputVisibility() {
+            if (batchSizeTypeDropdown.value === 'standard') {
+                totalOilWeightInput.value = standardOilWeight;
+                totalOilWeightInput.readOnly = true; // Make it read-only
+                totalOilWeightInput.classList.add('bg-gray-100'); // Visual cue
+            } else { // custom
+                totalOilWeightInput.readOnly = false;
+                totalOilWeightInput.classList.remove('bg-gray-100');
+                // Optionally, clear the value or leave it for user to edit
+                // totalOilWeightInput.value = ''; 
+            }
+        }
+        batchSizeTypeDropdown.addEventListener('change', updateOilWeightInputVisibility);
+        updateOilWeightInputVisibility(); // Call on page load
 
         essentialOilsDropdown.addEventListener('change', function() {
             if (this.value === 'Other') {
@@ -188,15 +223,19 @@
         });
 
         const oilBlendConfig = {
-            olive:    { percent: 0.50, sap: 0.135, name: "Olive Oil (Light-colored)" },
-            coconut:  { percent: 0.25, sap: 0.183, name: "Coconut Oil" },
-            shea:     { percent: 0.20, sap: 0.131, name: "Shea Butter" },
-            castor:   { percent: 0.05, sap: 0.128, name: "Castor Oil" }
+            olive:    { percent: 0.50, sap: 0.135, name: "Olive Oil (Light-colored)" }, // 227g / 455g
+            coconut:  { percent: 0.2505, sap: 0.183, name: "Coconut Oil" }, // 114g / 455g 
+            shea:     { percent: 0.20, sap: 0.131, name: "Shea Butter" },   // 91g / 455g
+            castor:   { percent: 0.0505, sap: 0.128, name: "Castor Oil" }  // 23g / 455g
+            // Note: Percentages adjusted slightly to sum closer to 100% from the specific gram weights.
+            // Olive: 227/455 = 0.4989 => 50% is fine for display
+            // Coconut: 114/455 = 0.2505 => ~25%
+            // Shea: 91/455 = 0.20 => 20%
+            // Castor: 23/455 = 0.0505 => ~5%
         };
-        const goatMilkToOilRatio = 0.1385; 
-        const lyeConcentration = 0.33; 
+        const goatMilkToOilRatio = 63 / 455; // Approx 0.13846 
 
-        soapForm.addEventListener('submit', async function(event) { // Marked as async, but no await is used now
+        soapForm.addEventListener('submit', function(event) {
             event.preventDefault();
             statusMessage.textContent = '';
             loadingIndicator.style.display = 'block';
@@ -205,7 +244,7 @@
 
             try {
                 const formData = new FormData(soapForm);
-                const totalOilWeight = parseFloat(formData.get('totalOilWeight'));
+                const totalOilWeight = parseFloat(formData.get('totalOilWeight')); // This will be 455 if standard, or custom value
                 const superfatPercent = parseFloat(formData.get('superfatPercent'));
                 const selectedHerbNodes = document.querySelectorAll('input[name="herbs"]:checked');
                 const selectedHerbs = Array.from(selectedHerbNodes).map(cb => cb.value);
@@ -224,6 +263,7 @@
                 
                 const scentStrength = parseFloat(formData.get('scentStrength'));
 
+                // Oil weights are calculated based on the final totalOilWeight and fixed percentages
                 const oilWeights = {
                     olive: totalOilWeight * oilBlendConfig.olive.percent,
                     coconut: totalOilWeight * oilBlendConfig.coconut.percent,
@@ -237,7 +277,10 @@
                                    (oilWeights.castor * oilBlendConfig.castor.sap);
                 
                 const actualLyeNaOH = lyeForOilsRaw * (1 - (superfatPercent / 100));
-                const distilledWaterQty = (actualLyeNaOH / lyeConcentration) - actualLyeNaOH;
+                
+                // UPDATED WATER CALCULATION: 1:1 ratio with Lye
+                const distilledWaterQty = actualLyeNaOH; 
+                
                 const goatMilkQty = totalOilWeight * goatMilkToOilRatio;
                 
                 let essentialOilQtyGrams = 0;
@@ -247,7 +290,6 @@
                      essentialOilChoice = "None"; 
                 }
                 
-                // --- PDF Generation ---
                 generatePdf({
                     totalOilWeight,
                     superfatPercent,
@@ -259,7 +301,6 @@
                     distilledWaterQty, 
                     goatMilkQty,       
                     essentialOilQtyGrams
-                    // herbDescription is removed
                 });
 
             } catch (error) {
@@ -283,7 +324,7 @@
             doc.text("Your Custom Goat Milk Soap Recipe", doc.internal.pageSize.getWidth() / 2, 20, { align: 'center' });
             doc.setFontSize(10);
             doc.setTextColor(100);
-            doc.text(`(Based on your preferred method - GM added to oils)`, doc.internal.pageSize.getWidth() / 2, 26, { align: 'center' });
+            doc.text(`(1:1 Water:Lye Ratio, GM added to oils)`, doc.internal.pageSize.getWidth() / 2, 26, { align: 'center' });
             doc.text(`Generated: ${new Date().toLocaleDateString()}`, doc.internal.pageSize.getWidth() / 2, 32, { align: 'center' });
 
             let yPos = 42;
@@ -307,16 +348,17 @@
             doc.text(`  - Sodium Hydroxide (Lye):`, leftMargin + 5, yPos); doc.text(`${data.actualLyeNaOH.toFixed(2)} g`, leftMargin + valueOffset, yPos); yPos += lineSpacing;
             doc.text(`  - Distilled Water:`, leftMargin + 5, yPos); doc.text(`${data.distilledWaterQty.toFixed(2)} g`, leftMargin + valueOffset, yPos); yPos += lineSpacing;
             doc.setFontSize(9); doc.setTextColor(100);
-            doc.text(`     (Lye solution targets approx. ${lyeConcentration*100}% lye concentration)`, leftMargin + 5, yPos); yPos += (lineSpacing -2);
+            doc.text(`     (Using a 1:1 ratio of water to lye by weight)`, leftMargin + 5, yPos); yPos += (lineSpacing -2); // Updated note
             doc.setTextColor(0);
             doc.setFontSize(11);
 
             doc.text("Oils:", leftMargin, yPos); yPos += lineSpacing;
             doc.setFontSize(10);
-            doc.text(`  - ${oilBlendConfig.olive.name} (${oilBlendConfig.olive.percent*100}%):`, leftMargin + 5, yPos); doc.text(`${data.oilWeights.olive.toFixed(2)} g`, leftMargin + valueOffset, yPos); yPos += lineSpacing;
-            doc.text(`  - ${oilBlendConfig.coconut.name} (${oilBlendConfig.coconut.percent*100}%):`, leftMargin + 5, yPos); doc.text(`${data.oilWeights.coconut.toFixed(2)} g`, leftMargin + valueOffset, yPos); yPos += lineSpacing;
-            doc.text(`  - ${oilBlendConfig.shea.name} (${oilBlendConfig.shea.percent*100}%):`, leftMargin + 5, yPos); doc.text(`${data.oilWeights.shea.toFixed(2)} g`, leftMargin + valueOffset, yPos); yPos += lineSpacing;
-            doc.text(`  - ${oilBlendConfig.castor.name} (${oilBlendConfig.castor.percent*100}%):`, leftMargin + 5, yPos); doc.text(`${data.oilWeights.castor.toFixed(2)} g`, leftMargin + valueOffset, yPos); yPos += lineSpacing;
+            // Display percentages based on the config for clarity, actual weights are calculated
+            doc.text(`  - ${oilBlendConfig.olive.name} (~${oilBlendConfig.olive.percent*100}%):`, leftMargin + 5, yPos); doc.text(`${data.oilWeights.olive.toFixed(2)} g`, leftMargin + valueOffset, yPos); yPos += lineSpacing;
+            doc.text(`  - ${oilBlendConfig.coconut.name} (~${(oilBlendConfig.coconut.percent*100).toFixed(0)}%):`, leftMargin + 5, yPos); doc.text(`${data.oilWeights.coconut.toFixed(2)} g`, leftMargin + valueOffset, yPos); yPos += lineSpacing;
+            doc.text(`  - ${oilBlendConfig.shea.name} (~${oilBlendConfig.shea.percent*100}%):`, leftMargin + 5, yPos); doc.text(`${data.oilWeights.shea.toFixed(2)} g`, leftMargin + valueOffset, yPos); yPos += lineSpacing;
+            doc.text(`  - ${oilBlendConfig.castor.name} (~${(oilBlendConfig.castor.percent*100).toFixed(0)}%):`, leftMargin + 5, yPos); doc.text(`${data.oilWeights.castor.toFixed(2)} g`, leftMargin + valueOffset, yPos); yPos += lineSpacing;
 
             doc.setFontSize(11);
             doc.text("To Add to Warm Oils:", leftMargin, yPos); yPos += lineSpacing;
@@ -329,16 +371,14 @@
 
             if (data.selectedHerbs.length > 0) {
                 doc.text(`Herbs: ${data.selectedHerbs.join(', ')}`, leftMargin, yPos); yPos += lineSpacing;
-                // Removed herbDescription display logic
             } else {
                 doc.text("Herbs: None selected", leftMargin, yPos); yPos += lineSpacing;
             }
-            yPos += (lineSpacing / 2); // Adjusted spacing slightly
+            yPos += (lineSpacing / 2); 
 
             if (data.essentialOilChoice.toLowerCase() !== "none" && data.essentialOilChoice !== "") {
                 doc.text(`Essential Oils: ${data.essentialOilChoice}`, leftMargin, yPos); yPos += lineSpacing;
                 doc.text(`  - Amount:`, leftMargin + 5, yPos); doc.text(`${data.essentialOilQtyGrams.toFixed(2)} g (${(data.scentStrength*100).toFixed(0)}% of oils)`, leftMargin + valueOffset, yPos); yPos += lineSpacing;
-                // Check if it was a custom entry by seeing if the value exists in the original dropdown options
                 const isCustomEO = !Array.from(essentialOilsDropdown.options).some(opt => opt.value === data.essentialOilChoice && opt.value !== "Other" && opt.value !== "None");
                 if (isCustomEO && data.essentialOilChoice.toLowerCase() !== "none") { 
                      doc.setFontSize(9); doc.setTextColor(70);
@@ -353,7 +393,7 @@
             doc.setFontSize(12); doc.setTextColor(40, 116, 50);
             doc.text("Basic Instructions (Your Preferred Method):", leftMargin, yPos); yPos += lineSpacing;
             doc.setFontSize(10); doc.setTextColor(0);
-            const instructions = [
+            const instructions = [ // Instructions remain the same as they already matched the GM to oils method
                 "1. Safety First: Wear gloves, eye protection, and long sleeves. Work in a well-ventilated area. Ensure no children or pets are nearby.",
                 "2. Prepare Lye Solution: Carefully and slowly add lye (Sodium Hydroxide) to the cool distilled water, stirring gently until fully dissolved. This mixture will get hot. Set aside in a safe place to cool down to approximately 90-110°F (32-43°C).",
                 "3. Prepare Oils & Goat Milk: Combine solid oils (Coconut, Shea) and melt them. Add liquid oils (Olive, Castor). Allow the oil mixture to cool to 90-110°F (32-43°C). Once at temperature, gently stir your (cool or room temp) goat milk into the warm oils until well combined.",
@@ -379,6 +419,11 @@
             statusMessage.textContent = 'Personalized PDF recipe generated successfully!';
             showModal('Your custom soap recipe PDF has been downloaded!');
         }
+
+    </script>
+</body>
+</html>
+
 
     </script>
 </body>
